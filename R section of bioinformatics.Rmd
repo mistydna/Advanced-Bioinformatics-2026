@@ -1,0 +1,106 @@
+---
+title: "Advanced Bioinformatics 2026 assessment"
+author: "K25163716"
+date: "2026-04-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Task 3.1
+
+The `:` operator is used to generate a sequence of all integers from 5 to 55, then pass it to the `sum()` function to calculate their total.
+```{r}
+sum(5:55)
+```
+
+## Task 3.2
+
+The function called `sumfun` takes one input `n` and calculates the sum of all integers between 5 and `n` using the `:` operator and `sum()` function.
+
+```{r}
+sumfun <- function(n) {
+  sum(5:n)
+}
+```
+
+The function is then repeated for n = 10, n = 20 and n = 100:
+```{r}
+sumfun(10)
+```
+```{r}
+sumfun(20)
+```
+```{r}
+sumfun(100)
+```
+
+## Task 3.3
+
+The Fibonacci sequence starts with 1,1 each subsequent number is the sum of the two preceding numbers (1,1,2,3,5...). The `for` loop is used to calculate and print the first 12 entries.
+```{r}
+fib <- c(1, 1)
+for (i in 3:12) {
+  fib[i] <- fib[i-1] + fib[i-2]
+}
+print(fib)
+```
+
+## Task 3.4
+
+Using the `mtcars` dataset a boxplot of miles per gallon (`mgp`) is generated as a function of number of gears (`gear`).To make it readable and colourful `fill` will colour each box by the number of gears. The `factor()` function is used to tell R to treat `gear` as a category rather than a number.
+```{r}
+library(ggplot2)
+
+ggplot(mtcars, aes(x = factor(gear), y = mpg, fill = factor(gear))) +
+  geom_boxplot() +
+  labs(x = "Number of Gears", y = "Miles per Gallon", fill = "Gears")
+```
+
+## Task 3.5
+
+The `lm()` function is used to fit a linear relationship between speed and braking distance in the `cars` dataset. Speed is measured in **mph** and distance in **feet**.
+```{r}
+model <- lm(dist ~ speed, data = cars)
+summary(model)
+```
+
+The fitted intercept is -17.5791 (standard error: 6.7584) and the 
+slope is 3.9324 (standard error: 0.4155). This means for every 1 mph 
+increase in speed, braking distance increases by approximately 3.93 
+feet.
+
+## Task 3.6
+
+The installed `ggplot2` package is used to plot the data points from the `cars` dataset and overlay the linear fit from **Task 3.5** using `geom_smooth()`.
+```{r}
+ggplot(cars, aes(x = speed, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, colour = "blue") +
+  labs(x = "Speed (mph)", y = "Braking Distance (feet)")
+```
+
+## Task 3.7
+
+To estimate the reaction time, braking distance is assumed as proportional to speed squared. The total stopping distance is modelled as: distance = reaction_time × speed + k × speed². I fit this using `lm()` with no intercept.
+```{r}
+model2 <- lm(dist ~ 0 + speed + I(speed^2), data = cars)
+summary(model2)
+```
+The coefficient for `speed` is 1.23903, which represents reaction 
+distance per mph. Converting to seconds (dividing by 1.467, since 
+1 mph = 1.467 ft/s) gives an estimated reaction time of approximately 
+0.845 seconds. This is a reasonable result as typical human reaction 
+time is between 0.7 and 1.5 seconds. The coefficient for `speed^2` 
+is 0.09014, representing the braking component of stopping distance.
+
+The next step involved ploting the data points and the fitted relationship:
+```{r}
+ggplot(cars, aes(x = speed, y = dist)) +
+  geom_point() +
+  geom_smooth(method = "lm", formula = y ~ 0 + x + I(x^2), 
+              se = FALSE, colour = "red") +
+  labs(x = "Speed (mph)", y = "Braking Distance (feet)")
+```
