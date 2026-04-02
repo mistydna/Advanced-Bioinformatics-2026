@@ -104,3 +104,121 @@ ggplot(cars, aes(x = speed, y = dist)) +
               se = FALSE, colour = "red") +
   labs(x = "Speed (mph)", y = "Braking Distance (feet)")
 ```
+
+## Task 3.8
+
+The count data and sample description files using `read.csv()` and `read.table()` respectively are used.
+```{r}
+counts <- read.csv("/Users/sylvia/Downloads/LMS_RNAseq_short-master-2023-final 2/course/exercises/data/exercise1_counts.csv", row.names = 1)
+
+sample_info <- read.table("/Users/sylvia/Downloads/LMS_RNAseq_short-master-2023-final 2/course/exercises/data/exercise1_sample_description.info", header = TRUE, sep = "\t")
+```
+
+## Task 3.9
+
+`col_data` is created from the sample description file, which will be used to describe the columns of the count matrix. The dimensions of both objects are then checked to make sure they match.
+```{r}
+col_data <- data.frame(sample_info)
+dim(counts)
+dim(col_data)
+```
+
+The counts matrix contains 26,301 genes across 9 samples. The 
+col_data object contains 9 rows (one per sample) and 4 columns 
+describing each sample. The number of samples match confirming 
+the data is compatible for DESeq2 analysis.
+
+## Task 3.10
+
+A DESeqDataSet object is constructed using the count data and sample description. The `condition` column is used as the design variable, which tells DESeq2 which groups to compare.
+```{r}
+library(DESeq2)
+
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                              colData = col_data,
+                              design = ~ condition)
+dds
+```
+
+## Task 3.11
+
+rlog and VST (Variance Stabilizing Transformation) is performed on the DESeq2 object. Both methods normalise the count data to remove the dependence of variance on the mean, making it suitable for visualisation and clustering.
+```{r}
+rlog_data <- rlog(dds, blind = TRUE)
+vst_data <- vst(dds, blind = TRUE)
+```
+
+## Task 3.12
+
+A heatmap of the top 40 most highly expressed genes is drawn using 
+both rlog and VST transformed data. The `rowMeans()` function is used 
+to calculate the average expression per gene and select the top 40. 
+Clustering is applied to both rows and columns to reveal patterns in 
+the data.
+```{r}
+library(pheatmap)
+
+# Heatmap using rlog data
+top40_rlog <- head(order(rowMeans(assay(rlog_data)), decreasing = TRUE), 40)
+pheatmap(assay(rlog_data)[top40_rlog, ], 
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE,
+         main = "Top 40 genes - rlog")
+```
+```{r}
+# Heatmap using VST data
+top40_vst <- head(order(rowMeans(assay(vst_data)), decreasing = TRUE), 40)
+pheatmap(assay(vst_data)[top40_vst, ], 
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE,
+         main = "Top 40 genes - VST")
+```
+
+## Task 3.13
+
+A Sample Distance Matrix (SDM) is generated to visualise the clustering and similarity between samples. The `dist()` function calculates the distances between samples using the rlog transformed data.
+```{r}
+library(RColorBrewer)
+
+sampleDists <- dist(t(assay(rlog_data)))
+sampleDistMatrix <- as.matrix(sampleDists)
+
+colors <- colorRampPalette(rev(brewer.pal(9, "Blues")))(255)
+
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows = sampleDists,
+         clustering_distance_cols = sampleDists,
+         col = colors,
+         main = "Sample Distance Matrix")
+```
+
+The SDM shows clear separation between the mutant and control 
+samples. The two groups cluster separately, indicating distinct 
+gene expression profiles between conditions. Within each group, 
+samples show high similarity to each other as expected.
+
+## Task 3.14
+
+Principal Component Analysis (PCA) is performed using the rlog transformed data. PCA reduces the dimensionality of the data and allows visualisation of the major sources of variation between samples. The percentage of variance explained by each principal component is also reported.
+```{r}
+plotPCA(rlog_data, intgroup = "condition")
+```
+```{r}
+pca_data <- prcomp(t(assay(rlog_data)))
+pca_var <- pca_data$sdev^2 / sum(pca_data$sdev^2) * 100
+cat("PC1:", round(pca_var[1], 1), "%\n")
+cat("PC2:", round(pca_var[2], 1), "%\n")
+```
+
+The PCA plot shows clear separation between the control (FFa) and 
+mutant (KOa and KOb) samples along PC1, which explains 70% of the 
+variance. PC2 explains 13% of the variance and separates the two 
+mutant groups from each other. This confirms the condition is the 
+main source of variation in the data.
+
+## Task 3.15
+
+The PCA is repeated using VST transformed data and compared to the rlog PCA from Task 3.14.
+```{r}
+plotPCA(vst_data, intgroup = "condition")
+```
