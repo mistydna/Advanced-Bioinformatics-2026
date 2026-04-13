@@ -1,9 +1,10 @@
 # Advanced Bioinformatics 2026 Assessment
 R/RStudio assessment section
+
 Author: K25163716
 
 ## HTML Output
-Click [here](https://htmlpreview.github.io/?https://github.com/mistydna/Advanced-Bioinformatics-2026/blob/main/R-section-of-bioinformatics.html) to view the rendered HTML report for ## 3.1 to 3.15
+Click [here](https://htmlpreview.github.io/?https://github.com/mistydna/Advanced-Bioinformatics-2026/blob/main/R-section-of-bioinformatics.html) to view the HTML report for **Tasks 3.1 to 3.15**
 
 ## Dependencies and Libraries
 The following R packages were used for this secction:
@@ -14,7 +15,7 @@ The following R packages were used for this secction:
 - `BiocManager` — used to install Bioconductor packages
 
 ## Data
-The RNA-seq data used in ## Tasks 3.8-3.15 was obtained from the 
+The RNA-seq data used in **Tasks 3.8-3.15** was obtained from the 
 LMS RNA-seq tutorial and can be accessed [here](https://emckclac-my.sharepoint.com/:u:/g/personal/k2037526_kcl_ac_uk/EYabNsg1JVZHrYzuMKqlHFEB_9WI3aHeNLzvk7eGqX-0yQ?e=GOB5VC).
 
 The `data` folder contains:
