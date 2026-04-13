@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "~/Advanced-Bioinformatics-2026")
 ```
 
 ## Task 3.1
@@ -84,7 +85,9 @@ ggplot(cars, aes(x = speed, y = dist)) +
 
 ## Task 3.7
 
-To estimate the reaction time, braking distance is assumed as proportional to speed squared. The total stopping distance is modelled as: distance = reaction_time × speed + k × speed². I fit this using `lm()` with no intercept.
+To estimate the reaction time, braking distance is assumed as proportional to speed squared. The total stopping distance is modelled as: distance = reaction_time × speed + k × speed². This is fitted using `lm()` with no intercept (`~ 0`) because the 
+model assumes that at zero speed, stopping distance is zero which 
+meaning no intercept is physically meaningful here.
 ```{r}
 model2 <- lm(dist ~ 0 + speed + I(speed^2), data = cars)
 summary(model2)
@@ -109,9 +112,10 @@ ggplot(cars, aes(x = speed, y = dist)) +
 
 The count data and sample description files using `read.csv()` and `read.table()` respectively are used.
 ```{r}
-counts <- read.csv("/Users/sylvia/Downloads/LMS_RNAseq_short-master-2023-final 2/course/exercises/data/exercise1_counts.csv", row.names = 1)
+counts <- read.csv("data/exercise1_counts.csv", row.names = 1)
 
-sample_info <- read.table("/Users/sylvia/Downloads/LMS_RNAseq_short-master-2023-final 2/course/exercises/data/exercise1_sample_description.info", header = TRUE, sep = "\t")
+sample_info <- read.table("data/exercise1_sample_description.info", 
+                          header = TRUE, sep = "\t")
 ```
 
 ## Task 3.9
@@ -142,7 +146,15 @@ dds
 
 ## Task 3.11
 
-rlog and VST (Variance Stabilizing Transformation) is performed on the DESeq2 object. Both methods normalise the count data to remove the dependence of variance on the mean, making it suitable for visualisation and clustering.
+rlog (regularised log) and VST (Variance Stabilizing Transformation) 
+transformations are performed on the DESeq2 object. Raw count data 
+from RNA-seq experiments has a mean-variance relationship where highly 
+expressed genes show much higher variance than lowly expressed ones. 
+Both transformations address this by stabilising the variance across 
+the range of mean expression values, making the data suitable for 
+visualisation and clustering. rlog is preferred for smaller datasets 
+(n < 30 samples) as it is more robust, while VST is faster and better 
+suited to larger datasets. Both are applied here for comparison.
 ```{r}
 rlog_data <- rlog(dds, blind = TRUE)
 vst_data <- vst(dds, blind = TRUE)
@@ -151,10 +163,15 @@ vst_data <- vst(dds, blind = TRUE)
 ## Task 3.12
 
 A heatmap of the top 40 most highly expressed genes is drawn using 
-both rlog and VST transformed data. The `rowMeans()` function is used 
-to calculate the average expression per gene and select the top 40. 
-Clustering is applied to both rows and columns to reveal patterns in 
-the data.
+both rlog and VST transformed data. The top 40 genes are selected 
+using `rowMeans()` to calculate average expression per gene focusing 
+on the most highly expressed genes allows clearer visualisation of 
+expression patterns across samples. Hierarchical clustering is applied 
+to both rows (genes) and columns (samples) to group genes with similar 
+expression profiles and reveal whether samples cluster by condition. 
+This is a useful quality control step to check that biological 
+replicates behave consistently and that conditions are separating 
+as expected.
 ```{r}
 library(pheatmap)
 
@@ -176,7 +193,17 @@ pheatmap(assay(vst_data)[top40_vst, ],
 
 ## Task 3.13
 
-A Sample Distance Matrix (SDM) is generated to visualise the clustering and similarity between samples. The `dist()` function calculates the distances between samples using the rlog transformed data.
+A Sample Distance Matrix (SDM) is generated to visualise the 
+similarity and dissimilarity between all pairs of samples. The 
+`dist()` function calculates Euclidean distances between samples 
+using the rlog transformed data, the smaller the distance, the 
+more similar two samples are. This is an important quality control 
+step as it allows us to verify that biological replicates cluster 
+together and that the two conditions (control and mutant) are 
+clearly separated from each other. The `RColorBrewer` package is 
+used to apply a blue colour scale where darker blue indicates 
+greater similarity (smaller distance) and lighter blue indicates 
+greater dissimilarity.
 ```{r}
 library(RColorBrewer)
 
@@ -192,14 +219,27 @@ pheatmap(sampleDistMatrix,
          main = "Sample Distance Matrix")
 ```
 
-The SDM shows clear separation between the mutant and control 
+The SDM confirms a clear separation between the mutant and control 
 samples. The two groups cluster separately, indicating distinct 
 gene expression profiles between conditions. Within each group, 
-samples show high similarity to each other as expected.
+samples show high similarity to each other as expected for 
+biological replicates. This gives confidence that the data is 
+of good quality and suitable for downstream differential 
+expression analysis.
 
 ## Task 3.14
 
-Principal Component Analysis (PCA) is performed using the rlog transformed data. PCA reduces the dimensionality of the data and allows visualisation of the major sources of variation between samples. The percentage of variance explained by each principal component is also reported.
+Principal Component Analysis (PCA) is performed using the rlog 
+transformed data. PCA is a dimensionality reduction technique that 
+transforms the data into a set of uncorrelated variables called 
+principal components, ordered by the amount of variance they 
+explain. This allows visualisation of the major sources of variation 
+between samples in a 2D plot. PC1 captures the largest source of 
+variation in the data, and PC2 the second largest. If the experiment 
+is well designed, samples should cluster by condition along PC1. 
+The `plotPCA()` function from DESeq2 uses the top 500 most variable 
+genes by default, which focuses the analysis on the most 
+informative genes.
 ```{r}
 plotPCA(rlog_data, intgroup = "condition")
 ```
@@ -212,13 +252,31 @@ cat("PC2:", round(pca_var[2], 1), "%\n")
 
 The PCA plot shows clear separation between the control (FFa) and 
 mutant (KOa and KOb) samples along PC1, which explains 70% of the 
-variance. PC2 explains 13% of the variance and separates the two 
-mutant groups from each other. This confirms the condition is the 
-main source of variation in the data.
+variance — confirming that the experimental condition is the dominant 
+source of variation in the dataset. PC2 explains 13% of the variance 
+and separates the two mutant subgroups (KOa and KOb) from each other, 
+suggesting a secondary source of biological variation within the 
+mutant condition. Together PC1 and PC2 explain 83% of the total 
+variance, indicating a well-structured dataset.
 
 ## Task 3.15
 
-The PCA is repeated using VST transformed data and compared to the rlog PCA from Task 3.14.
+The PCA is repeated using VST transformed data to allow comparison 
+with the rlog method used in Task 3.14. While both transformations 
+aim to stabilise variance, they use different mathematical approaches 
+and may produce slightly different results. Comparing the two PCA 
+plots allows assessment of whether the choice of normalisation method 
+affects the biological conclusions drawn from the data.
 ```{r}
 plotPCA(vst_data, intgroup = "condition")
 ```
+
+The VST PCA shows PC1 explaining 69% of variance and PC2 explaining 
+14% of variance — almost identical to the rlog results (PC1: 70%, 
+PC2: 13%). Both plots show the same overall pattern of separation 
+between control and mutant samples along PC1, with PC2 separating 
+the two mutant subgroups. This consistency between methods confirms 
+that the biological conclusions are robust and not dependent on the 
+choice of normalisation method. VST is generally preferred for larger 
+datasets due to its computational efficiency, while rlog is more 
+accurate for smaller sample sizes such as this one.
