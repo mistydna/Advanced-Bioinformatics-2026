@@ -23,7 +23,7 @@ Both pipelines cover:
 - Variant annotation with ANNOVAR and snpEff/SnpSift
 - Variant prioritisation (exonic, novel variants)
 
-> **Note:** ANNOVAR requires manual registration at [openbioinformatics.org](https://www.openbioinformatics.org/annovar/annovar_download_form.php) before the tarball can be placed at the expected path.
+> **Note:** ANNOVAR requires manual registration at [openbioinformatics.org](https://www.openbioinformatics.org/annovar/annovar_download_form.php) before the it can be placed at the expected path.
 
 ---
 
